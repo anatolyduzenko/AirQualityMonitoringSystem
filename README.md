@@ -44,6 +44,8 @@ This project is an Arduino-based system that combines a **2.0-inch ST7789 IPS di
 - **MQ2**: Analog output to A1
 - **DHT11**: Digital output to D7
 
+<img src="img/breadboard.jpg" />
+
 ---
 
 ## Software Requirements
@@ -97,6 +99,10 @@ Ensure the following libraries are installed in your Arduino IDE:
 ### Display
 - **Static Text**: Displays parameter labels.
 - **Dynamic Data**: Updates readings in real time with color-coded alerts.
+
+<img src="img/display.jpg" alt="Main screen" />
+
+<img src="img/display_with_alert.jpg" alt="Alert" />
 
 ---
 

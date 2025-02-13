@@ -25,12 +25,11 @@ DHT11 dht(DHTPIN);
 float temperature, humidity;
 float rzero, correctedRZero, resistance, ppm, correctedPPM;
 
+// Define LCD pins
 #define TFT_DC   9
-//#define TFT_CS    9  // with CS
-//#define TFT_RST  -1  // with CS
 #define TFT_CS  8 // without CS
 #define TFT_RST  10 // without CS
-
+// Deifne screen size
 #define SCR_WD 240
 #define SCR_HT 320
 ST7789_AVR lcd = ST7789_AVR(TFT_DC, TFT_RST, TFT_CS);
@@ -46,125 +45,140 @@ ST7789_AVR lcd = ST7789_AVR(TFT_DC, TFT_RST, TFT_CS);
 
 MQUnifiedsensor MQ2(Board, Voltage_Resolution, ADC_Bit_Resolution, Pin, Type);
 
+// Prepare sensors, lcd
 void setup() 
 {
-  Serial.begin(115200);
-  lcd.init(SCR_WD,SCR_HT);
-  lcd.setRotation(3);
-  lcd.fillScreen(BLACK);
+    Serial.begin(115200);
+    lcd.init(SCR_WD,SCR_HT);
+    lcd.setRotation(3);
+    lcd.fillScreen(BLACK);
 
-  MQ2.setRegressionMethod(1); //_PPM =  a*ratio^b
-  MQ2.setA(36974); MQ2.setB(-3.109); // Configure the equation to to calculate LPG concentration
-  MQ2.init();
+    MQ2.setRegressionMethod(1); //_PPM =  a*ratio^b
+    MQ2.setA(36974); MQ2.setB(-3.109); // Configure the equation to to calculate LPG concentration
+    MQ2.init();
 
-  float calcR0 = 0;
-  for(int i = 1; i<=10; i ++)
-  {
+    float calcR0 = 0;
+    for(int i = 1; i<=10; i ++)
+    {
     MQ2.update(); // Update data, the arduino will read the voltage from the analog pin
     calcR0 += MQ2.calibrate(RatioMQ2CleanAir);
     Serial.print(".");
-  }
-  MQ2.setR0(calcR0/10);
-  lcd.println("MQ-2 calibration done.");
-  delay(100);
+    }
+    MQ2.setR0(calcR0/10);
+    lcd.println("MQ-2 calibration done.");
+    delay(100);
 
-  displayStatic();
+    displayStatic();
 }
 
 void loop(void) 
 {
-  humidity = dht.readHumidity();
-  temperature = dht.readTemperature();
+    humidity = dht.readHumidity();
+    temperature = dht.readTemperature();
 
-  // Check if any reads failed and exit early (to try again).
-  if (isnan(humidity) || isnan(temperature)) {
-    return;
-  }
+    // Check if any reads failed and exit early (to try again).
+    if (isnan(humidity) || isnan(temperature)) {
+        return;
+    }
 
-  rzero = mq135_sensor.getRZero();
-  correctedRZero = mq135_sensor.getCorrectedRZero(temperature, humidity);
-  resistance = mq135_sensor.getResistance();
-  ppm = mq135_sensor.getPPM();
-  correctedPPM = mq135_sensor.getCorrectedPPM(temperature, humidity);
+    rzero = mq135_sensor.getRZero();
+    correctedRZero = mq135_sensor.getCorrectedRZero(temperature, humidity);
+    resistance = mq135_sensor.getResistance();
+    ppm = mq135_sensor.getPPM();
+    correctedPPM = mq135_sensor.getCorrectedPPM(temperature, humidity);
 
-  displayMeteo();
-//  delay(2000);
+    displayMeteo();
 }
 
+// Display static texts on LCD.
 unsigned long displayStatic() 
 {
-  lcd.setCursor(0, 0);
-  lcd.setTextColor(WHITE);
-  lcd.setTextSize(2);
-  lcd.fillScreen(BLACK);
+    lcd.setCursor(0, 0);
+    lcd.setTextColor(WHITE);
+    lcd.setTextSize(2);
+    lcd.fillScreen(BLACK);
 
-  lcd.println("Temperature: ");
-  lcd.println("Humidity: ");
-  lcd.println("");
-  lcd.println("MQ-135");
-  lcd.println("Rzero: ");
-  lcd.println("Corrected Rzero: ");
-  lcd.println("Resistance: ");
-  lcd.println("PPM: ");
-  lcd.println("Corrected PPM:");
-  lcd.println("");
-  lcd.println("MQ-2");
-  lcd.print("LPG:" );
-  lcd.println(" CO:");
-  lcd.print("Alcohol:"); 
+    lcd.println("Temperature: ");
+    lcd.println("Humidity: ");
+    lcd.println("");
+    lcd.println("MQ-135");
+    lcd.println("Rzero: ");
+    lcd.println("Corrected Rzero: ");
+    lcd.println("Resistance: ");
+    lcd.println("PPM: ");
+    lcd.println("Corrected PPM:");
+    lcd.println("");
+    lcd.println("MQ-2");
+    lcd.print("LPG:" );
+    lcd.println(" CO:");
+    lcd.print("Alcohol:"); 
 }
 
+// Display real-time data from sensors on LCD.
 unsigned long displayMeteo()
 {
-  lcd.setTextColor(GREEN);
-  lcd.fillRect(156, 0, 208, 16, BLACK);
-  lcd.setCursor(156, 0);
-  lcd.print(temperature);
-  lcd.fillRect(120, 16, 170, 16, BLACK);
-  lcd.setCursor(120, 16);
-  lcd.print(humidity);
-  lcd.fillRect(84, 64, 120, 16, BLACK);
-  lcd.setCursor(84, 64);
-  lcd.print(rzero);
-  lcd.fillRect(204, 80, 240, 16, BLACK);
-  lcd.setCursor(204, 80);
-  lcd.print(correctedRZero);
-  lcd.fillRect(144, 96, 180, 16, BLACK);
-  lcd.setCursor(144, 96);
-  lcd.print(resistance);
-  if(ppm > 200) {
+    // Temperature
+    lcd.setTextColor(GREEN);
+    lcd.fillRect(156, 0, 208, 16, BLACK);
+    lcd.setCursor(156, 0);
+    lcd.print(temperature);
+    
+    // Humidity
+    lcd.fillRect(120, 16, 170, 16, BLACK);
+    lcd.setCursor(120, 16);
+    lcd.print(humidity);
+
+    // R-zero value
+    lcd.fillRect(84, 64, 120, 16, BLACK);
+    lcd.setCursor(84, 64);
+    lcd.print(rzero);
+
+    // R-zero correction
+    lcd.fillRect(204, 80, 240, 16, BLACK);
+    lcd.setCursor(204, 80);
+    lcd.print(correctedRZero);
+
+    // Sensor resistance
+    lcd.fillRect(144, 96, 180, 16, BLACK);
+    lcd.setCursor(144, 96);
+    lcd.print(resistance);
+
+    // PPM
+    if(ppm > 200) {
     lcd.setTextColor(RED);
-  }
-  lcd.fillRect(60, 112, 120, 16, BLACK);
-  lcd.setCursor(60, 112);
-  lcd.println(ppm);
-  lcd.setTextColor(GREEN);
-  lcd.fillRect(168, 128, 204, 16, BLACK);
-  lcd.setCursor(168, 128);
-  lcd.println(correctedPPM);
-  lcd.println("");
+    }
+    lcd.fillRect(60, 112, 120, 16, BLACK);
+    lcd.setCursor(60, 112);
+    lcd.println(ppm);
 
-  MQ2.setA(574.25); MQ2.setB(-2.222);
-  MQ2.update(); 
-  lcd.fillRect(48, 176, 72, 16, BLACK);
-  lcd.setCursor(48, 176);
-  lcd.setTextColor(GREY);
-  lcd.print(MQ2.readSensor());
-  
-  MQ2.setA(36974); MQ2.setB(-3.109);
-  MQ2.update(); 
-  lcd.fillRect(156, 176, 200, 16, BLACK);
-  lcd.setCursor(156, 176);
-  lcd.setTextColor(GREY);
-  lcd.println(MQ2.readSensor());
-  
-  MQ2.setA(658.71); MQ2.setB(-2.168);
-  MQ2.update(); 
-  lcd.fillRect(96, 192, 136, 16, BLACK);
-  lcd.setCursor(96, 192);
-  lcd.setTextColor(GREY);
-  lcd.print(MQ2.readSensor());
+    // Corrected PPM
+    lcd.setTextColor(GREEN);
+    lcd.fillRect(168, 128, 204, 16, BLACK);
+    lcd.setCursor(168, 128);
+    lcd.println(correctedPPM);
 
+    // Values from MQ-2 (LPG, Alcohol, CO, etc.)
+    lcd.println("");
+    MQ2.setA(574.25); MQ2.setB(-2.222);
+    MQ2.update(); 
+    lcd.fillRect(48, 176, 72, 16, BLACK);
+    lcd.setCursor(48, 176);
+    lcd.setTextColor(GREY);
+    lcd.print(MQ2.readSensor());
+
+    MQ2.setA(36974); MQ2.setB(-3.109);
+    MQ2.update(); 
+    lcd.fillRect(156, 176, 200, 16, BLACK);
+    lcd.setCursor(156, 176);
+    lcd.setTextColor(GREY);
+    lcd.println(MQ2.readSensor());
+
+    MQ2.setA(658.71); MQ2.setB(-2.168);
+    MQ2.update(); 
+    lcd.fillRect(96, 192, 136, 16, BLACK);
+    lcd.setCursor(96, 192);
+    lcd.setTextColor(GREY);
+    lcd.print(MQ2.readSensor());
 }
 
 
